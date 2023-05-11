@@ -2,6 +2,9 @@ package com.mavrck.gridbot.server;
 
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.mavrck.gridbot.server.Constants.TradePhase;
+import com.mavrck.gridbot.server.Constants.TradeStatus;
+import com.mavrck.gridbot.server.util.Colour;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Hashtable;
@@ -11,7 +14,7 @@ public class BotRoom
 {
     private static Logger logger = Logger.getLogger(BotRoom.class.getName());
 
-    private TradePhase tradePhase;
+    private static TradeStatus tradeStatus;
 
     private static Hashtable finalExecutionOrder;
 
@@ -19,7 +22,6 @@ public class BotRoom
     public void handleBotSession() throws Exception
     {
         BotSession start = new BotSession();
-        updateTradePhase(Constants.TradePhase.INITIATED);
 		start.startBotSession();
 		start.checkTicker();
 		Thread.sleep(2000);
@@ -40,22 +42,24 @@ public class BotRoom
             if(currentprice != CalcHandler.getCurrentPrice())
             {
                 int higherValue = CalcHandler.getCurrentPrice() + CalcHandler.getLevels();
-                System.out.println("HIGHERVALUE --> " + higherValue);
                 if(higherValue <= currentprice)
                 {
                     logger.info("CROSSED LEVEL");
                     finalExecutionOrder = CalcHandler.getFinalExecutionOrder();
+                    if(this.tradeStatus == Constants.TradeStatus.SELL)
+                    {
+                        start.buy();
+                    }
                 }
                 int lowerValue = CalcHandler.getCurrentPrice() - CalcHandler.getLevels();
-                System.out.println("CURRENTPRICE --> " + currentprice);
-                System.out.println("LOWERVALUE --> " + lowerValue);
+                System.out.println(Colour.Background.ANSI_CYAN_BACKGROUND + "HIGHERPRICE --> " + higherValue + Colour.ANSI_RESET);
+                System.out.println(Colour.Background.ANSI_CYAN_BACKGROUND + "CURRENTPRICE --> " + currentprice + Colour.ANSI_RESET);
+                System.out.println(Colour.Background.ANSI_CYAN_BACKGROUND + "LOWERVALUE --> " + lowerValue + Colour.ANSI_RESET);
                 if(lowerValue >= currentprice)
                 {
                     logger.info("Waiting for next buy");
                     start.sell();
                     finalExecutionOrder = CalcHandler.getFinalExecutionOrder();
-                    //wait for next buy
-                    //next buy for the next green
                 }
                 else
                 {
@@ -78,17 +82,9 @@ public class BotRoom
         
     }
 
-    public void updateTradePhase(TradePhase tradePhase)
+    public static void updateTradeStatus(TradeStatus tradestatus)
     {
-        this.tradePhase = tradePhase;
-        if(tradePhase == Constants.TradePhase.INITIATED)
-        {
-            
-        }
-        if(tradePhase == Constants.TradePhase.FAILED)
-        {
-            //Handle failed session
-        }
+        tradestatus = tradeStatus;
     }
 
     public void addSession(BotSession session)

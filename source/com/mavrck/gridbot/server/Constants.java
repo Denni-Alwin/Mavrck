@@ -15,7 +15,7 @@ public class Constants
 		SELLING,
 		FAILED,
 		STAYING,
-                COMPLETED;
+            COMPLETED;
         }
 
 	public enum TradeStatus

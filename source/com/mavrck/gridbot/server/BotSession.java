@@ -13,8 +13,11 @@ import org.json.simple.parser.JSONParser;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.Color;
 
 import com.mavrck.gridbot.server.Constants.TradePhase;
+import com.mavrck.gridbot.server.Constants.TradeStatus;
+import com.mavrck.gridbot.server.util.Colour;
 import com.mavrck.gridbot.server.util.Timeouts;
 import com.mavrck.gridbot.server.util.Util;
 import com.mavrck.gridbot.server.util.WebDriverUtil;
@@ -29,6 +32,8 @@ public class BotSession
     private WebDriver webDriver = null;
 
     private TradePhase tradePhase = null;
+
+    private TradeStatus testStatus = null;
 
     public boolean startBotSession()
     {
@@ -105,7 +110,8 @@ public class BotSession
         WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='root']/div/div[3]/div/div[3]/div[2]/div/div[2]/div/form/button"));
         //Confirm buy
         WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='confirm-popup-stop-limit-order']"));
-        LOGGER.info("[BOTSESSION] [BUY]" + this.getCurrentPrice());
+        LOGGER.info(Colour.ANSI_BOLD + Colour.TextDecor.ANSI_GREEN + "[BOTSESSION] [BUY] " + this.getCurrentPrice() + Colour.ANSI_RESET);
+        BotRoom.updateTradeStatus(Constants.TradeStatus.BUY);
         return true;
     }
 
@@ -122,7 +128,8 @@ public class BotSession
         WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='confirm-popup-stop-limit-order']"));
         //clear
 
-        LOGGER.info("[BOTSESSION] [SELL]" + this.getCurrentPrice());
+        LOGGER.info(Colour.ANSI_BOLD + Colour.TextDecor.ANSI_RED + "[BOTSESSION] [SELL] " + this.getCurrentPrice() + Colour.ANSI_RESET);
+        BotRoom.updateTradeStatus(Constants.TradeStatus.SELL);
         return true;
     }
 
@@ -135,9 +142,8 @@ public class BotSession
     {
         WebElement exchangePrice = WebDriverUtil.getElement(webDriver, "HIGHLIGHT", By.xpath("//*[@id='exchange-last-price']"));
         String currentPrice = exchangePrice.getText();
-        LOGGER.info("[getCurrentPrice] [CURRENT PRICE] " + currentPrice);
         String str=currentPrice.replaceAll("[\\p{Sc}-,]", "");  
-        LOGGER.info("[getCurrentPrice] [CURRENT PRICE] [REMOVED UNWANTED CHAR]" + str);
+        LOGGER.info(Colour.ANSI_BOLD + Colour.Background.ANSI_BLUE_BACKGROUND + "[getCurrentPrice] [CURRENT PRICE] " + currentPrice + Colour.ANSI_RESET);
         int currentPriceInt = Integer.parseInt(str);
         return currentPriceInt;
     }
