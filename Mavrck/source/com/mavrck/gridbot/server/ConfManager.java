@@ -28,7 +28,11 @@ public class ConfManager
 	private static String credentialConfFile = null;
 	private static Properties credentialConf;
 
-	private static String ticker = "BTC";
+	// private static String ticker = "BTC";
+	
+	// private static String currency = "INR";
+
+	private static String ticker = "USDT";
 	
 	private static String currency = "INR";
 
@@ -42,6 +46,8 @@ public class ConfManager
 
 	private static String username = "";
 	private static String password = "";
+
+	private static String levels = "";
 
 
 	public static boolean initialize() throws Exception
@@ -60,15 +66,21 @@ public class ConfManager
 		ticker = serverConf.getProperty("ticker", ticker);
 		baseUrl = serverConf.getProperty("baseurl", baseUrl);
 
+		System.out.println(serverConf.getProperty("levels", levels) + " " + ticker);
+
+		//CalcHandler.setLevels(Float.parseFloat(serverConf.getProperty("levels" , levels)));
+
 		//driverConf
 		driverPath = driverConf.getProperty("driverpath", driverPath);
 		chromePath = driverConf.getProperty("chromepath", chromePath);
+
+		System.out.println(serverConfFile);
 
 		//credentialConf
 		username = credentialConf.getProperty("username", username);
 		password = credentialConf.getProperty("password", password);
 		
-		logger.log(Level.INFO, "MAVERICK Server ConfManager initialized Successfully.");//No I18n
+		logger.log(Level.INFO, "[MAVERICK] Server ConfManager initialized Successfully.");//No I18n
         return true;
 	}
 	

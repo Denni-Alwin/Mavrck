@@ -16,8 +16,11 @@ public class WebDriverFactory
         setChromeDriverPath();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-notifications");
-        options.setBinary(ConfManager.getChromePath());
+	String user_data_dir = "/home/denni-15540/.config/google-chrome/Profile 2/";
+	options.addArguments("--user-data-dir=" + user_data_dir);
+       	options.setBinary(ConfManager.getChromePath());
         WebDriver driver = new ChromeDriver(options);
+        driver.manage().window().maximize();
         return driver;        
     }    
 

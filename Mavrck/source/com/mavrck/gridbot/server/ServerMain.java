@@ -19,19 +19,9 @@ public class ServerMain
 				logger.severe("UNABLE TO INITIALIZE CONFMANAGER");//No I18N
 				System.exit(1);
 			}
-			BotSession start = new BotSession();
-			logger.info("Server Started Successfully");
-			start.startBotSession();
-			start.checkTicker();
-			Thread.sleep(2000);
-			logger.info("BUYING");
-			start.buy();
-			Thread.sleep(2000);
-			logger.info("SELLING");
-			start.sell();
-			Thread.sleep(2000);
-			start.getCurrentPrice();
-			
+			logger.info("[MAVERICK] Server Started Successfully");
+			BotRoom botRoom = new BotRoom();
+			botRoom.handleBotSession();
 		}
 		catch(Exception exp)
                 {

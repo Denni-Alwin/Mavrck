@@ -2,23 +2,23 @@ package com.mavrck.gridbot.server;
 
 public class Constants
 {
-	public enum botStatus
+	public enum BotStatus
         {
                 FREE,
                 ACTIVE;
         }
 
-	public enum tradePhase
+	public enum TradePhase
         {
                 INITIATED,
                 BUYING,
 		SELLING,
 		FAILED,
 		STAYING,
-                COMPLETED;
+            COMPLETED;
         }
 
-	public enum tradeStatus
+	public enum TradeStatus
 	{
 		BUY,
 		SELL,

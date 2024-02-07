@@ -13,7 +13,11 @@ import org.json.simple.parser.JSONParser;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.Color;
 
+import com.mavrck.gridbot.server.Constants.TradePhase;
+import com.mavrck.gridbot.server.Constants.TradeStatus;
+import com.mavrck.gridbot.server.util.Colour;
 import com.mavrck.gridbot.server.util.Timeouts;
 import com.mavrck.gridbot.server.util.Util;
 import com.mavrck.gridbot.server.util.WebDriverUtil;
@@ -27,9 +31,14 @@ public class BotSession
 
     private WebDriver webDriver = null;
 
-    public boolean startBotSession()
+    private static TradePhase tradePhase = null;
+
+    private static TradeStatus testStatus = null;
+
+    public boolean startBotSession() throws Exception
     {
         this.webDriver = WebDriverFactory.createWebDriver();
+        Thread.sleep(3000);
         webDriver.get(ConfManager.getBaseUrl());
         login(webDriver);
 
@@ -51,7 +60,7 @@ public class BotSession
                 System.out.println(ConfManager.getPassword());
                 WebDriverUtil.sendKeysToElement(webDriver, "Send keys to Password Box", By.xpath("//*[@id='wrap_app']/main/div/div[3]/div/form/div/div[2]/div/input"), 0, ConfManager.getPassword());
                 WebDriverUtil.clickElement(webDriver, "Clicking Next Button", By.xpath("//*[@id='click_login_submit']"));
-               WebDriverUtil.clickElement(webDriver, "Clicking Next Button", By.xpath("//*[@id='mfa-email-input']"));
+                WebDriverUtil.clickElement(webDriver, "Clicking Next Button", By.xpath("//*[@id='mfa-email-input']"));
             }
             else
             {   
@@ -84,8 +93,8 @@ public class BotSession
         else
         {
             LOGGER.info("[checkTicker] [TICKER] [TICKER NOT EQUAL] [SELECTING GIVEN TICKER]");
-            WebDriverUtil.sendKeysToElement(webDriver, "", By.xpath("//*[@id='root']/div/div[3]/div/div[1]/div/div[1]/div[2]/div/input"), ConfManager.getTicker());
-            WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='ticker-btc']/div[2]/div[1]/span"));
+            WebDriverUtil.sendKeysToElement(webDriver, "", By.xpath("//*[@id=\"root\"]/div/div[2]/div/div[1]/div/div[1]/div[1]/div/input"), ConfManager.getTicker());
+            WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id=\"root\"]/div/div[2]/div/div[1]/div/div[2]"));
             return checkTicker();
         }
 
@@ -96,13 +105,16 @@ public class BotSession
         WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='exchange-buy-tab']"));
         //lowest price
         //WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='root']/div/div[3]/div/div[3]/div[2]/div/div[2]/div/form/div[2]/div/div/div[2]/span"));
-        WebDriverUtil.executeJsScript(webDriver, "document.querySelector('#buy-total').value=''");
+        //WebDriverUtil.executeJsScript(webDriver, "document.querySelector('#buy-total').value=''");
+        WebDriverUtil.getElement(webDriver," ",By.xpath("//*[@id='buy-total']")).clear();
         Thread.sleep(1000);
         WebDriverUtil.sendKeysToElement(webDriver, "", By.xpath("//*[@id='buy-total']"), "1000");
-        WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='root']/div/div[3]/div/div[3]/div[2]/div/div[2]/div/form/button"));
-
+        WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='root']/div/div[2]/div/div[3]/div[2]/div/div[2]/div/form/button"));
         //Confirm buy
         WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='confirm-popup-stop-limit-order']"));
+        LOGGER.info(Colour.ANSI_BOLD + Colour.TextDecor.ANSI_GREEN + "[BOTSESSION] [BUY] " + this.getCurrentPrice() + Colour.ANSI_RESET);
+        BotRoom.updateTradeStatus(Constants.TradeStatus.BUY);
+        BotRoom.updateBuyPriceAction();
         return true;
     }
 
@@ -110,16 +122,19 @@ public class BotSession
     {
         WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='exchange-sell-tab']"));
         //WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='root']/div/div[3]/div/div[3]/div[2]/div/div[2]/div/form/div[2]/div/div/div[2]/span"));
-        WebDriverUtil.executeJsScript(webDriver, "document.querySelector('#sell-total').value=''");
+        //WebDriverUtil.executeJsScript(webDriver, "document.querySelector('#sell-total').value=''");
+        WebDriverUtil.getElement(webDriver," ",By.xpath("//*[@id='sell-total']")).clear();
         Thread.sleep(1000);
         WebDriverUtil.sendKeysToElement(webDriver, "", By.xpath("//*[@id='sell-total']"), "1000");
-        WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='root']/div/div[3]/div/div[3]/div[2]/div/div[2]/div/form/button"));
+        WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='root']/div/div[2]/div/div[3]/div[2]/div/div[2]/div/form/button"));
         
         //confirm sell
         WebDriverUtil.clickElement(webDriver, "", By.xpath("//*[@id='confirm-popup-stop-limit-order']"));
-
         //clear
 
+        LOGGER.info(Colour.ANSI_BOLD + Colour.TextDecor.ANSI_RED + "[BOTSESSION] [SELL] " + this.getCurrentPrice() + Colour.ANSI_RESET);
+        BotRoom.updateTradeStatus(Constants.TradeStatus.SELL);
+        BotRoom.updateSellPriceAction();
         return true;
     }
 
@@ -128,14 +143,14 @@ public class BotSession
         return this.webDriver;
     }
 
-    public int getCurrentPrice() throws Exception
+    public float getCurrentPrice() throws Exception
     {
         WebElement exchangePrice = WebDriverUtil.getElement(webDriver, "HIGHLIGHT", By.xpath("//*[@id='exchange-last-price']"));
         String currentPrice = exchangePrice.getText();
-        LOGGER.info("[getCurrentPrice] [CURRENT PRICE] " + currentPrice);
         String str=currentPrice.replaceAll("[\\p{Sc}-,]", "");  
-        LOGGER.info("[getCurrentPrice] [CURRENT PRICE] [REMOVED UNWANTED CHAR]" + str);
-        int currentPriceInt = Integer.parseInt(str);
+        LOGGER.info(Colour.ANSI_BOLD + Colour.Background.ANSI_BLUE_BACKGROUND + "[getCurrentPrice] [CURRENT PRICE] " + currentPrice + Colour.ANSI_RESET);
+        float currentPriceInt = Float.parseFloat(str);
         return currentPriceInt;
     }
+    
 }
